@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/png"
 	_ "image/png"
 	"log"
 	"os"
 )
 
 // OutputSolution : Renders the maze image and solution, side by side
-func OutputSolution(mazeName string, imageHeight, imageWidth int) (string, error) {
+func OutputSolution(mazeName string, imageHeight, imageWidth int, nodes []Node) (string, error) {
 
 	solutionName := fmt.Sprintf("solution_%v", mazeName)
 
@@ -32,8 +33,6 @@ func OutputSolution(mazeName string, imageHeight, imageWidth int) (string, error
 		return "", err
 	}
 
-	fmt.Println("mazeImage(0,0):", mazeImage.At(0, 0))
-
 	pixels := make(map[string]color.RGBA)
 	gap := 3
 	totalWidth := imageWidth*2 + gap
@@ -42,29 +41,63 @@ func OutputSolution(mazeName string, imageHeight, imageWidth int) (string, error
 	pixels["black"] = color.RGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}
 	pixels["white"] = color.RGBA{R: uint8(255), G: uint8(255), B: uint8(255), A: uint8(255)}
 	pixels["opaque"] = color.RGBA{R: uint8(255), G: uint8(255), B: uint8(255), A: uint8(0)}
+	pixels["purple"] = color.RGBA{R: uint8(102), G: uint8(51), B: uint8(153), A: uint8(255)}
 
 	image := image.NewRGBA(image.Rect(0, 0, totalWidth, imageHeight))
 
 	for h := 0; h < imageHeight; h++ {
 		for w := 0; w < totalWidth; w++ {
+			// log.Printf("H: %v, W: %v \n", h, w)
 			if w < imageWidth {
 				// Copy phase
-				mazePixel := mazeImage.At(w, h).RGBA()
-				fmt.Println("mazePixel:", mazePixel)
+				r, g, b, a := mazeImage.At(w, h).RGBA()
+				mazePixel := color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: uint8(a)}
 				image.SetRGBA(w, h, mazePixel)
 			}
 
-			if w > imageWidth && w < totalWidth {
+			if w >= imageWidth && w < imageWidth+gap {
 				// Gap phase
-				image.SetRGBA(w, h, pixels["black"])
+				image.SetRGBA(w, h, pixels["opaque"])
 			}
 
-			if w > imageWidth+gap {
+			if w >= (imageWidth + gap) {
 				// Solution phase
-				image.SetRGBA(w, h, pixels["red"])
+				var pixelToSet color.RGBA
+				nodeX := w - (imageWidth + gap)
+				nodeY := h * imageHeight
+				selectedNode := nodes[nodeY+nodeX]
+
+				if selectedNode.isSolution == true {
+					// log.Println("Is part of solution")
+					pixelToSet = pixels["red"]
+				} else if selectedNode.isWall == true {
+					// log.Println("is wall")
+					pixelToSet = pixels["black"]
+				} else {
+					// log.Println("is path")
+					pixelToSet = pixels["white"]
+				}
+
+				image.SetRGBA(w, h, pixelToSet)
 			}
 		}
 	}
 
+	err = png.Encode(solutionReader, image)
+	if err != nil {
+		log.Fatal("Error encoding:", err)
+	}
+
+	return solutionName, nil
+}
+
+func rgbaToString(r *color.RGBA) (string, error) {
+	if int(r.R) == 255 && int(r.G) == 255 && int(r.B) == 255 {
+		return "white", nil
+	} else if int(r.R) == 255 && int(r.G) == 0 && int(r.B) == 0 {
+		return "red", nil
+	} else if int(r.R) == 0 && int(r.G) == 0 && int(r.B) == 0 {
+		return "black", nil
+	}
 	return "", nil
 }
