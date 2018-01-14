@@ -48,9 +48,9 @@ func main() {
 
 	var nodes []Node
 	NodeID := 0
-	for y := 1; y <= height; y++ {
-		for x := 1; x <= width; x++ {
-			log.Println("x, y:", x, y)
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// log.Println("x, y:", x, y)
 			NodeID++
 			var node Node
 			tempR, tempG, tempB, _ := img.At(x, y).RGBA()             //uint32 values (Skip alpha value)
@@ -60,12 +60,9 @@ func main() {
 			} else {
 				node = Node{isWall: true}
 			}
-
 			nodes = append(nodes, node)
 		}
 	}
-
-	log.Println("!!!!!!!!!!!!img.At(2,0):", img.At(2, 0))
 
 	for i := range nodes {
 		if i > 0 {
@@ -105,18 +102,13 @@ func main() {
 	}
 
 	startPos.checked = true
+	startPos.isSolution = true
 	stack := NewStack()
+	startPos.down.parent = startPos
 	stack.Push(startPos.down)
 
-	parent := startPos
-
-	operations := 1
-	commands := make(map[string]string)
-	commands["wall"] = "was wall"
-	commands["checked"] = "was checked"
-	commands["null"] = "was null"
+	operations := 0
 	for {
-
 		operations++
 		log.Println("Operations:", operations)
 		n := stack.Pop()
@@ -127,21 +119,20 @@ func main() {
 		}
 		log.Println("NodeID:", n.id)
 		// log.Println("parent before:", parent)
-		n.checked = true  // Make sure current item wont be processed again
-		n.parent = parent // Make sure item finds it way back
-		parent = n        // Set new parent
+		n.checked = true // Make sure current item wont be processed again
+		n.processedID = operations
 		// log.Println("parent after:", parent)
 
 		if n == endPos {
 			log.Println("Got to the end")
 			n.isSolution = true
 			partOfSolutionCount := 1
-			for node := n; node.parent != nil; node = node.parent {
-				partOfSolutionCount++
+			for node := endPos.parent; node.parent != nil; node = node.parent {
 				node.isSolution = true
+				partOfSolutionCount++
 			}
 			log.Println("After count:", partOfSolutionCount)
-
+			showProcessID(nodes)
 			str, err := OutputSolution(path, height, width, nodes)
 			if err != nil {
 				log.Fatal("Error1:", err)
@@ -153,51 +144,37 @@ func main() {
 		if n.down != nil {
 			if n.down.checked == false {
 				if n.down.isWall == false {
+					n.down.parent = n
 					stack.Push(n.down)
-				} else {
-					log.Println(fmt.Sprintf("n.down %v", commands["wall"]))
 				}
-			} else {
-				log.Println(fmt.Sprintf("n.down %v", commands["checked"]))
 			}
-		} else {
-			log.Println(fmt.Sprintf("n.down %v", commands["null"]))
-		}
-
-		// if n.up != nil {
-		// 	if n.up.checked == false {
-		// 		if n.up.isWall == false {
-		// 			stack.Push(n.up)
-		// 		}
-		// 	}
-		// }
-
-		if n.left != nil {
-			if n.left.checked == false {
-				if n.left.isWall == false {
-					stack.Push(n.left)
-				} else {
-					log.Println(fmt.Sprintf("n.left %v", commands["wall"]))
-				}
-			} else {
-				log.Println(fmt.Sprintf("n.left %v", commands["checked"]))
-			}
-		} else {
-			log.Println(fmt.Sprintf("n.left %v", commands["null"]))
 		}
 
 		if n.right != nil {
 			if n.right.checked == false {
 				if n.right.isWall == false {
+					n.right.parent = n
 					stack.Push(n.right)
-				} else {
-					log.Println(fmt.Sprintf("n.right %v", commands["wall"]))
 				}
-			} else {
-				log.Println(fmt.Sprintf("n.right %v", commands["checked"]))
 			}
-		} else {
-			log.Println(fmt.Sprintf("n.right %v", commands["null"]))
+		}
+
+		if n.left != nil {
+			if n.left.checked == false {
+				if n.left.isWall == false {
+					n.left.parent = n
+					stack.Push(n.left)
+				}
+			}
+		}
+
+		if n.up != nil {
+			if n.up.checked == false {
+				if n.up.isWall == false {
+					n.up.parent = n
+					stack.Push(n.up)
+				}
+			}
 		}
 	}
 }
