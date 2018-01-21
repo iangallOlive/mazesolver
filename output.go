@@ -47,7 +47,6 @@ func OutputSolution(mazeName string, imageHeight, imageWidth int, nodes []Node) 
 
 	for h := 0; h < imageHeight; h++ {
 		for w := 0; w < totalWidth; w++ {
-			// log.Printf("H: %v, W: %v \n", h, w)
 			if w < imageWidth {
 				// Copy phase
 				r, g, b, a := mazeImage.At(w, h).RGBA()
@@ -89,15 +88,4 @@ func OutputSolution(mazeName string, imageHeight, imageWidth int, nodes []Node) 
 	}
 
 	return solutionName, nil
-}
-
-func rgbaToString(r *color.RGBA) (string, error) {
-	if int(r.R) == 255 && int(r.G) == 255 && int(r.B) == 255 {
-		return "white", nil
-	} else if int(r.R) == 255 && int(r.G) == 0 && int(r.B) == 0 {
-		return "red", nil
-	} else if int(r.R) == 0 && int(r.G) == 0 && int(r.B) == 0 {
-		return "black", nil
-	}
-	return "", nil
 }

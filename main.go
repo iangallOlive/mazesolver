@@ -6,6 +6,7 @@ import (
 	_ "image/png"
 	"log"
 	"os"
+	"time"
 )
 
 // Bash: clear && go build -o binary.exe && binary.exe maze1
@@ -56,7 +57,7 @@ func main() {
 			tempR, tempG, tempB, _ := img.At(x, y).RGBA()             //uint32 values (Skip alpha value)
 			r, g, b := int(tempR/257), int(tempG/257), int(tempB/257) // Somehow convert uint32 to 0-255 RGB color scale (Stackoverflow is great)
 			if r == 255 && g == 255 && b == 255 {
-				node = Node{id: NodeID, isWall: false}
+				node = Node{isWall: false}
 			} else {
 				node = Node{isWall: true}
 			}
@@ -84,55 +85,88 @@ func main() {
 		nodes[i].checked = false
 	}
 
-	var startPos *Node
-	var endPos *Node
-
+	var potentialPoints []Point
+	// Check top
 	for i := 0; i < width; i++ {
 		if nodes[i].isWall == false {
-			startPos = &nodes[i]
-			log.Println("Got starting position at:", i)
+			potentialPoints = append(potentialPoints, Point{topSide: true, node: &nodes[i]})
 		}
 	}
 
-	for i := len(nodes) - 1 - width; i < len(nodes)-1; i++ {
+	// Check bottom
+	for i := (len(nodes) - 1) - width; i < len(nodes)-1; i++ {
 		if nodes[i].isWall == false {
-			endPos = &nodes[i]
-			log.Println("Got end pos at:", i)
+			potentialPoints = append(potentialPoints, Point{bottomSide: true, node: &nodes[i]})
 		}
 	}
+
+	// Check left
+	for i := (width - 1) + 1; i < len(nodes); i += width {
+		if nodes[i].isWall == false {
+			potentialPoints = append(potentialPoints, Point{leftSide: true, node: &nodes[i]})
+		}
+	}
+
+	// Check right
+	for i := width - 1; i <= len(nodes)-1; i += width {
+		if nodes[i].isWall == false {
+			potentialPoints = append(potentialPoints, Point{topSide: true, node: &nodes[i]})
+		}
+	}
+
+	if len(potentialPoints) > 2 {
+		log.Fatalf("Error: Too many potential starting points. Found %v starting points", len(potentialPoints))
+	}
+	log.Println("Total potential Points: ", len(potentialPoints))
+
+	startPos := potentialPoints[0].node
+	endPos := potentialPoints[1].node
+
+	correspondingStartNode := make(map[string]string)
+	correspondingStartNode["up"] = "down"
+	correspondingStartNode["down"] = "up"
+	correspondingStartNode["left"] = "right"
+	correspondingStartNode["right"] = "left"
+
+	stack := NewQueue()
 
 	startPos.checked = true
 	startPos.isSolution = true
-	stack := NewStack()
-	startPos.down.parent = startPos
-	stack.Push(startPos.down)
 
-	operations := 0
+	if potentialPoints[0].bottomSide == true {
+		// Go up
+		startPos.up.parent = startPos
+		stack.Push(startPos.up)
+	} else if potentialPoints[0].topSide == true {
+		// Go down
+		startPos.down.parent = startPos
+		stack.Push(startPos.down)
+	} else if potentialPoints[0].leftSide == true {
+		// Go right
+		startPos.right.parent = startPos
+		stack.Push(startPos.right)
+	} else {
+		// Go left
+		startPos.left.parent = startPos
+		stack.Push(startPos.left)
+	}
+
+	start := time.Now()
 	for {
-		operations++
-		log.Println("Operations:", operations)
 		n := stack.Pop()
 		if n == nil {
 			// End of the stack, either errored or finished
-			log.Println("Ran out of items")
+			log.Println("Out of items")
 			return
 		}
-		log.Println("NodeID:", n.id)
-		// log.Println("parent before:", parent)
 		n.checked = true // Make sure current item wont be processed again
-		n.processedID = operations
-		// log.Println("parent after:", parent)
 
 		if n == endPos {
-			log.Println("Got to the end")
+			log.Printf("Solved after %v ms \n", time.Since(start).Nanoseconds()/int64(time.Millisecond))
 			n.isSolution = true
-			partOfSolutionCount := 1
 			for node := endPos.parent; node.parent != nil; node = node.parent {
 				node.isSolution = true
-				partOfSolutionCount++
 			}
-			log.Println("After count:", partOfSolutionCount)
-			showProcessID(nodes)
 			str, err := OutputSolution(path, height, width, nodes)
 			if err != nil {
 				log.Fatal("Error1:", err)
