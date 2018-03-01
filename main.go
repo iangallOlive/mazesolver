@@ -20,7 +20,6 @@ func main() {
 	}
 
 	// Prepare solution folders if not exists
-
 	if _, err := os.Stat("./solutions"); os.IsNotExist(err) {
 		fError := os.Mkdir("solutions", os.ModePerm)
 		if fError != nil {
@@ -32,10 +31,10 @@ func main() {
 	path := os.Args[1]
 	imagePath := fmt.Sprintf("./mazes/%v.png", path)
 	fReader, err := os.Open(imagePath)
-	defer fReader.Close()
 	if err != nil {
 		log.Fatalf("Error opening file. Error: %v", err)
 	}
+	defer fReader.Close()
 
 	// Step 2: Convert image into a mesh of Nodes
 	img, _, err := image.Decode(fReader)
@@ -48,11 +47,9 @@ func main() {
 	log.Printf("Image is %v x %v", width, height)
 
 	var nodes []Node
-	NodeID := 0
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			// log.Println("x, y:", x, y)
-			NodeID++
 			var node Node
 			tempR, tempG, tempB, _ := img.At(x, y).RGBA()             //uint32 values (Skip alpha value)
 			r, g, b := int(tempR/257), int(tempG/257), int(tempB/257) // Somehow convert uint32 to 0-255 RGB color scale (Stackoverflow is great)
@@ -128,6 +125,7 @@ func main() {
 	correspondingStartNode["left"] = "right"
 	correspondingStartNode["right"] = "left"
 
+	// stack := NewStack()
 	stack := NewQueue()
 
 	startPos.checked = true
