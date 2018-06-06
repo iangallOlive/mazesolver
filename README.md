@@ -24,14 +24,14 @@ Take the point designated as start, and the point designated as end, create a st
 
 ## Installation
 
-Since this only relies on stdlib, no dependencies will be installed.
+Since this project only relies on stdlib, no extra dependencies will be required.
 
 ``` go get github.com/jkob/mazesolver ```
 
 
 ## Algorithms
 
-In order to switch to a BFS, you will have to create a queue instead of a stack. Please note that this will severely increase the time it takes to solve huge mazes (50k x 50k).
+In order to switch to a BFS, you will have to create a queue instead of a stack. Please note that this will _severely_ increase the time it takes to solve huge mazes (50k x 50k).
 
 I recommend leaving one commented out, if you want to ever switch back without pain.
 
