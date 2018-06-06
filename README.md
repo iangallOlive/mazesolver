@@ -31,11 +31,11 @@ Since this only relies on stdlib, no dependencies will be installed.
 
 ## Algorithms
 
-In order to switch to a BFS, you will have to create a queue instead of a stack. Please note that this will severely damage the time it takes to solve huge mazes (50k x 50k).
+In order to switch to a BFS, you will have to create a queue instead of a stack. Please note that this will severely increase the time it takes to solve huge mazes (50k x 50k).
 
 I recommend leaving one commented out, if you want to ever switch back without pain.
 
-Locate where the variable **stack** is initialized & assigned. (_main.go_)
+Locate where the variable **stack** is initialized and assigned. (_main.go_)
 
 Instead of ```stack := NewStack()```, assign it to ```NewQueue()```
 
